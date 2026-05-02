@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Routine Enforcement System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400..800&family=Baloo+Bhaijaan+2:wght@400..800&family=Lora:ital,wght@0,400..700;1,400..700&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Slab:wght@100..900&family=Roboto:ital,wght@0,100..900;1,100..900&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="navbar">
+        <div class="navbar__left">
+          <div class="navbar__title">Routine Enforcement System</div>
+          <div class="navbar__subtitle">Daily discipline only</div>
+        </div>
+        <div class="navbar__center">
+          <button class="nav-date-btn" data-shift="-1">&#9664;</button>
+          <input type="date" id="current-date" class="nav-date-input" />
+          <button class="nav-date-btn" data-shift="1">&#9654;</button>
+        </div>
+        <nav class="navbar__right">
+          <button class="nav-tab nav-tab--active" data-view="define-task">
+            Define Task
+          </button>
+          <button class="nav-tab" data-view="daily-schedule">
+            Daily Schedule
+          </button>
+          <button class="nav-tab" data-view="tasks">Tasks</button>
+          <button class="nav-tab" data-view="consistency">Consistency</button>
+          <button class="nav-tab" data-view="report">Report</button>
+          <button class="nav-tab" data-view="yearly-report">Yearly Report</button>
+        </nav>
+      </header>
+
+      <main class="main-layout">
+        <section class="main-layout__content">
+          <div
+            class="view view--active"
+            id="view-define-task"
+            data-view-id="define-task"
+          >
+            <div class="panel panel--form">
+              <div class="panel__header">
+                <h2 class="panel__title">Define Task</h2>
+                <div class="panel__helper">Create tasks for the selected date</div>
+              </div>
+              <form id="task-form" class="task-form">
+                <label class="form-field">
+                  <span class="form-field__label">Title</span>
+                  <input
+                    type="text"
+                    id="task-title"
+                    class="form-field__input"
+                    maxlength="80"
+                    required
+                  />
+                </label>
+
+                <label class="form-field">
+                  <span class="form-field__label">Category</span>
+                  <select
+                    id="task-category"
+                    class="form-field__input"
+                    required
+                  >
+                    <option value="Study">Study</option>
+                    <option value="Health">Health</option>
+                    <option value="Coding">Coding</option>
+                    <option value="Personal">Personal</option>
+                  </select>
+                </label>
+
+                <label class="form-field">
+                  <span class="form-field__label">Priority</span>
+                  <select
+                    id="task-priority"
+                    class="form-field__input"
+                    required
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </label>
+
+                <div class="form-field form-field--inline">
+                  <label>
+                    <span class="form-field__label">Start time</span>
+                    <input
+                      type="time"
+                      id="task-start"
+                      class="form-field__input"
+                      required
+                    />
+                  </label>
+                  <label>
+                    <span class="form-field__label">End time</span>
+                    <input
+                      type="time"
+                      id="task-end"
+                      class="form-field__input"
+                      required
+                    />
+                  </label>
+                </div>
+
+                <label class="form-field">
+                  <span class="form-field__label">Estimated duration (min)</span>
+                  <input
+                    type="number"
+                    id="task-duration"
+                    class="form-field__input"
+                    min="1"
+                    max="1440"
+                    step="1"
+                    required
+                  />
+                </label>
+
+                <label class="form-field form-field--checkbox">
+                  <input
+                    type="checkbox"
+                    id="task-critical"
+                    class="form-field__checkbox"
+                  />
+                  <span class="form-field__label">Critical task</span>
+                </label>
+
+                <button type="submit" class="btn btn--primary">
+                  Save Task
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div class="view" id="view-daily-schedule" data-view-id="daily-schedule">
+            <div class="panel panel--schedule">
+              <div class="panel__header">
+                <h2 class="panel__title">Daily Schedule</h2>
+                <div class="panel__helper" id="schedule-helper">24-hour timeline view</div>
+              </div>
+              <div id="schedule-container" class="schedule">
+                <!-- Hour slots injected by JS -->
+              </div>
+            </div>
+          </div>
+
+          <div class="view" id="view-tasks" data-view-id="tasks">
+            <div class="panel panel--list">
+              <div class="panel__header">
+                <h2 class="panel__title">Tasks</h2>
+                <div class="panel__helper">View and manage all tasks</div>
+              </div>
+              <div class="tasks-toolbar">
+                <select id="tasks-filter-date" class="form-field__input">
+                  <option value="today">Current date</option>
+                  <option value="all">All dates</option>
+                </select>
+              </div>
+              <div id="tasks-table-container" class="tasks-table-container">
+                <table class="tasks-table">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Category</th>
+                      <th>Priority</th>
+                      <th>Date</th>
+                      <th>Time</th>
+                      <th>State</th>
+                      <th>Critical</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tasks-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="view" id="view-consistency" data-view-id="consistency">
+            <div class="panel panel--summary">
+              <div class="panel__header">
+                <h2 class="panel__title">Consistency</h2>
+                <div class="panel__helper">Today's performance metrics</div>
+              </div>
+              <div id="consistency-summary" class="summary-grid">
+                <div class="summary-item">
+                  <div class="summary-item__label">Current streak</div>
+                  <div
+                    id="streak-current"
+                    class="summary-item__value"
+                  >
+                    0
+                  </div>
+                </div>
+                <div class="summary-item">
+                  <div class="summary-item__label">Longest streak</div>
+                  <div
+                    id="streak-longest"
+                    class="summary-item__value"
+                  >
+                    0
+                  </div>
+                </div>
+                <div class="summary-item">
+                  <div class="summary-item__label">Completed today</div>
+                  <div
+                    id="completed-today"
+                    class="summary-item__value"
+                  >
+                    0
+                  </div>
+                </div>
+                <div class="summary-item">
+                  <div class="summary-item__label">Missed today</div>
+                  <div
+                    id="missed-today"
+                    class="summary-item__value"
+                  >
+                    0
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="view" id="view-report" data-view-id="report">
+            <div class="panel panel--summary">
+              <div class="panel__header">
+                <h2 class="panel__title">Report</h2>
+                <div class="panel__helper">7-day performance summary</div>
+              </div>
+              <div id="report-summary" class="summary-grid">
+                <div class="summary-item">
+                  <div class="summary-item__label">Tasks (7 days)</div>
+                  <div id="report-tasks-7d" class="summary-item__value">0</div>
+                </div>
+                <div class="summary-item">
+                  <div class="summary-item__label">Completed (7 days)</div>
+                  <div
+                    id="report-completed-7d"
+                    class="summary-item__value"
+                  >
+                    0
+                  </div>
+                </div>
+                <div class="summary-item">
+                  <div class="summary-item__label">Missed (7 days)</div>
+                  <div
+                    id="report-missed-7d"
+                    class="summary-item__value"
+                  >
+                    0
+                  </div>
+                </div>
+                <div class="summary-item">
+                  <div class="summary-item__label">Completion rate</div>
+                  <div
+                    id="report-completion-rate"
+                    class="summary-item__value"
+                  >
+                    0%
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="view" id="view-yearly-report" data-view-id="yearly-report">
+            <div class="panel panel--summary">
+              <div class="panel__header">
+                <h2 class="panel__title">Yearly Report</h2>
+                <div class="panel__helper">Annual discipline patterns</div>
+              </div>
+              <div id="yearly-report-content" class="yearly-report">
+                <div class="yearly-summary-grid">
+                  <div class="summary-item">
+                    <div class="summary-item__label">Total planned</div>
+                    <div id="yearly-total-planned" class="summary-item__value">0</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="summary-item__label">Total completed</div>
+                    <div id="yearly-total-completed" class="summary-item__value">0</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="summary-item__label">Missed critical</div>
+                    <div id="yearly-missed-critical" class="summary-item__value">0</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="summary-item__label">Strongest month</div>
+                    <div id="yearly-strongest" class="summary-item__value">—</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="summary-item__label">Weakest month</div>
+                    <div id="yearly-weakest" class="summary-item__value">—</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="summary-item__label">Avg completion</div>
+                    <div id="yearly-avg-completion" class="summary-item__value">0%</div>
+                  </div>
+                </div>
+                <div class="yearly-charts-grid">
+                  <div class="chart-panel chart-panel--compact">
+                    <div class="chart-panel__header">Monthly Consistency</div>
+                    <div class="chart-panel__body">
+                      <div class="chart-container chart-container--small">
+                        <canvas id="chart-monthly-consistency"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="chart-panel chart-panel--compact">
+                    <div class="chart-panel__header">Category Distribution (Year)</div>
+                    <div class="chart-panel__body">
+                      <div class="chart-container chart-container--small">
+                        <canvas id="chart-yearly-category"></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="main-layout__charts" id="analytics-section">
+          <div class="charts-section-header">
+            <div>
+              <div class="charts-section-header__title">Analytics</div>
+              <div class="charts-section-header__helper">Supporting metrics</div>
+            </div>
+            <div class="charts-section-header__actions">
+              <button
+                type="button"
+                class="charts-toggle-btn"
+                id="analytics-minimize"
+                title="Minimize analytics"
+                aria-label="Minimize analytics"
+              >
+                -
+              </button>
+              <button
+                type="button"
+                class="charts-toggle-btn"
+                id="analytics-maximize"
+                title="Maximize analytics"
+                aria-label="Maximize analytics"
+              >
+                □
+              </button>
+            </div>
+          </div>
+          <div class="charts-grid">
+            <div class="chart-panel">
+              <div class="chart-panel__header">Time by Category (7 days)</div>
+              <div class="chart-panel__body">
+                <div class="chart-container">
+                  <canvas id="chart-category-time"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="chart-panel">
+              <div class="chart-panel__header">Weekly Consistency</div>
+              <div class="chart-panel__body">
+                <div class="chart-container">
+                  <canvas id="chart-weekly-consistency"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <div class="toast" id="app-toast" role="status" aria-live="polite"></div>
+
+      <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+      <script type="module" src="js/firebase-config.js"></script>
+      <script src="js/utils.js"></script>
+      <script src="js/storage.js"></script>
+      <script src="js/charts.js"></script>
+      <script src="js/app.js"></script>
+    </div>
+  </body>
+</html>
