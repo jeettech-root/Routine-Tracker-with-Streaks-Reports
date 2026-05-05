@@ -87,6 +87,34 @@ table {
   gap: 4px;
 }
 
+.navbar__user {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.navbar__user-label {
+  font-family: "Roboto", system-ui, sans-serif;
+  font-size: 11px;
+  color: #8b909a;
+}
+
+.navbar__user-input {
+  width: 116px;
+  height: 26px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid #343843;
+  background-color: #11131a;
+  color: #e1e1e1;
+}
+
+.navbar__user-input:focus {
+  outline: 1px solid #4b7bec;
+  outline-offset: 0;
+  border-color: #4b7bec;
+}
+
 .nav-date-input {
   height: 26px;
   padding: 2px 6px;
@@ -1011,8 +1039,18 @@ table {
     width: 100%;
   }
 
-  .navbar__right {
+  .navbar__user {
     order: 4;
+    width: 100%;
+  }
+
+  .navbar__user-input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .navbar__right {
+    order: 5;
     width: 100%;
     flex-wrap: wrap;
     gap: 2px;

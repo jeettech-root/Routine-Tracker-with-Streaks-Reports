@@ -24,6 +24,17 @@
           <input type="date" id="current-date" class="nav-date-input" />
           <button class="nav-date-btn" data-shift="1">&#9654;</button>
         </div>
+        <div class="navbar__user">
+          <span class="navbar__user-label">User</span>
+          <input
+            type="text"
+            id="active-user-name"
+            class="navbar__user-input"
+            maxlength="40"
+            autocomplete="name"
+          />
+          <button type="button" id="switch-user" class="nav-tab">Switch</button>
+        </div>
         <nav class="navbar__right">
           <button class="nav-tab nav-tab--active" data-view="define-task">
             Define Task

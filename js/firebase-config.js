@@ -19,22 +19,27 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const routineDocRef = doc(db, "routineTracker", "default");
+
+function getUserDocRef(userId) {
+  return doc(db, "routineTrackerUsers", userId || "guest");
+}
 
 window.FirebaseServices = {
   app,
   db,
-  async loadTasks() {
-    const snapshot = await getDoc(routineDocRef);
+  async loadTasks(userId) {
+    const snapshot = await getDoc(getUserDocRef(userId));
     if (!snapshot.exists()) return null;
     const data = snapshot.data();
     return Array.isArray(data.tasks) ? data.tasks : [];
   },
-  async saveTasks(tasks) {
+  async saveTasks(tasks, user) {
     await setDoc(
-      routineDocRef,
+      getUserDocRef(user && user.id),
       {
         tasks,
+        userId: user && user.id,
+        userName: user && user.name,
         updatedAt: serverTimestamp(),
       },
       { merge: true }

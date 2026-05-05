@@ -6,6 +6,7 @@ const App = (function () {
   let currentDateISO = Utils.todayISO();
   let scheduleContainer = null;
   let dateInput = null;
+  let activeUser = null;
   let toastTimeoutId = null;
   let animatedTaskId = null;
   let animatedTaskTimeoutId = null;
@@ -66,6 +67,47 @@ const App = (function () {
         dateInput.value = currentDateISO;
         renderAll();
       });
+    });
+  }
+
+  function refreshTasksFromStorage() {
+    tasks = Storage.loadTasks();
+    renderAll();
+    Storage.loadTasksFromFirebase().then((firebaseTasks) => {
+      if (Array.isArray(firebaseTasks)) {
+        tasks = firebaseTasks;
+        renderAll();
+      }
+    });
+  }
+
+  function initUserControls() {
+    activeUser = Storage.getActiveUser();
+    const userInput = document.getElementById("active-user-name");
+    const switchBtn = document.getElementById("switch-user");
+    if (!userInput || !switchBtn) return;
+
+    userInput.value = activeUser.name;
+
+    function switchUser() {
+      const nextName = userInput.value.trim();
+      if (!nextName) {
+        window.alert("User name is required.");
+        userInput.value = activeUser.name;
+        return;
+      }
+      const nextUser = Storage.setActiveUser(nextName);
+      if (activeUser && nextUser.id === activeUser.id) return;
+      activeUser = nextUser;
+      refreshTasksFromStorage();
+      showToast("Switched to " + activeUser.name);
+    }
+
+    switchBtn.addEventListener("click", switchUser);
+    userInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        switchUser();
+      }
     });
   }
 
@@ -775,6 +817,7 @@ const App = (function () {
   }
 
   function init() {
+    initUserControls();
     tasks = Storage.loadTasks();
     initDateControls();
     initTabs();

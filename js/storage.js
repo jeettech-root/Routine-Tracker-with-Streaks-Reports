@@ -2,6 +2,8 @@
 
 const Storage = (function () {
   const KEYS = {
+    ACTIVE_USER: "RES_ACTIVE_USER_V1",
+    DEVICE_USER_NAME: "RES_DEVICE_USER_NAME_V1",
     TASKS: "RES_TASKS_V1",
     STREAK: "RES_STREAK_V1",
   };
@@ -20,20 +22,71 @@ const Storage = (function () {
     }
   }
 
+  function normalizeUserName(name) {
+    const value = String(name || "").trim();
+    return value || "Guest";
+  }
+
+  function makeUserId(name) {
+    return normalizeUserName(name)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "guest";
+  }
+
+  function getDefaultUserName() {
+    const existing = window.localStorage.getItem(KEYS.DEVICE_USER_NAME);
+    if (existing) return existing;
+    const suffix = Math.random().toString(36).slice(2, 7).toUpperCase();
+    const name = "User " + suffix;
+    window.localStorage.setItem(KEYS.DEVICE_USER_NAME, name);
+    return name;
+  }
+
+  function getActiveUser() {
+    const stored = safeParse(window.localStorage.getItem(KEYS.ACTIVE_USER), null);
+    if (stored && stored.id && stored.name) {
+      return {
+        id: String(stored.id),
+        name: normalizeUserName(stored.name),
+      };
+    }
+
+    const fallbackName = normalizeUserName(
+      window.prompt("Enter your name to load your own tasks", getDefaultUserName())
+    );
+    return setActiveUser(fallbackName);
+  }
+
+  function setActiveUser(name) {
+    const user = {
+      id: makeUserId(name),
+      name: normalizeUserName(name),
+    };
+    window.localStorage.setItem(KEYS.ACTIVE_USER, JSON.stringify(user));
+    return user;
+  }
+
+  function userKey(baseKey) {
+    return baseKey + "_" + getActiveUser().id;
+  }
+
   function loadTasks() {
-    const raw = window.localStorage.getItem(KEYS.TASKS);
+    const raw = window.localStorage.getItem(userKey(KEYS.TASKS));
     const value = safeParse(raw, []);
     if (!Array.isArray(value)) return [];
     return value;
   }
 
   function saveTasks(tasks) {
-    window.localStorage.setItem(KEYS.TASKS, JSON.stringify(tasks));
+    const user = getActiveUser();
+    window.localStorage.setItem(userKey(KEYS.TASKS), JSON.stringify(tasks));
     if (!window.navigator.onLine) {
       return;
     }
     if (window.FirebaseServices && window.FirebaseServices.saveTasks) {
-      window.FirebaseServices.saveTasks(tasks).catch((error) => {
+      window.FirebaseServices.saveTasks(tasks, user).catch((error) => {
         console.warn("Could not save tasks to Firebase.", error);
       });
     }
@@ -48,9 +101,9 @@ const Storage = (function () {
     }
 
     try {
-      const tasks = await window.FirebaseServices.loadTasks();
+      const tasks = await window.FirebaseServices.loadTasks(getActiveUser().id);
       if (Array.isArray(tasks)) {
-        window.localStorage.setItem(KEYS.TASKS, JSON.stringify(tasks));
+        window.localStorage.setItem(userKey(KEYS.TASKS), JSON.stringify(tasks));
         return tasks;
       }
       return null;
@@ -61,7 +114,7 @@ const Storage = (function () {
   }
 
   function loadStreak() {
-    const raw = window.localStorage.getItem(KEYS.STREAK);
+    const raw = window.localStorage.getItem(userKey(KEYS.STREAK));
     const value = safeParse(raw, null);
     if (!value) {
       return {
@@ -78,10 +131,12 @@ const Storage = (function () {
   }
 
   function saveStreak(streak) {
-    window.localStorage.setItem(KEYS.STREAK, JSON.stringify(streak));
+    window.localStorage.setItem(userKey(KEYS.STREAK), JSON.stringify(streak));
   }
 
   return {
+    getActiveUser,
+    setActiveUser,
     loadTasks,
     loadTasksFromFirebase,
     saveTasks,
