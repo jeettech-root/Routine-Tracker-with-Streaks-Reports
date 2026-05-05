@@ -3,7 +3,6 @@
 const Storage = (function () {
   const KEYS = {
     ACTIVE_USER: "RES_ACTIVE_USER_V1",
-    DEVICE_USER_NAME: "RES_DEVICE_USER_NAME_V1",
     TASKS: "RES_TASKS_V1",
     STREAK: "RES_STREAK_V1",
   };
@@ -22,54 +21,36 @@ const Storage = (function () {
     }
   }
 
-  function normalizeUserName(name) {
-    const value = String(name || "").trim();
-    return value || "Guest";
-  }
-
-  function makeUserId(name) {
-    return normalizeUserName(name)
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60) || "guest";
-  }
-
-  function getDefaultUserName() {
-    const existing = window.localStorage.getItem(KEYS.DEVICE_USER_NAME);
-    if (existing) return existing;
-    const suffix = Math.random().toString(36).slice(2, 7).toUpperCase();
-    const name = "User " + suffix;
-    window.localStorage.setItem(KEYS.DEVICE_USER_NAME, name);
-    return name;
-  }
-
   function getActiveUser() {
     const stored = safeParse(window.localStorage.getItem(KEYS.ACTIVE_USER), null);
     if (stored && stored.id && stored.name) {
       return {
         id: String(stored.id),
-        name: normalizeUserName(stored.name),
+        name: String(stored.name),
+        email: typeof stored.email === "string" ? stored.email : "",
       };
     }
-
-    const fallbackName = normalizeUserName(
-      window.prompt("Enter your name to load your own tasks", getDefaultUserName())
-    );
-    return setActiveUser(fallbackName);
+    return null;
   }
 
-  function setActiveUser(name) {
+  function setActiveUser(nextUser) {
+    if (!nextUser || !nextUser.id) return null;
     const user = {
-      id: makeUserId(name),
-      name: normalizeUserName(name),
+      id: String(nextUser.id),
+      name: String(nextUser.name || nextUser.email || "Signed in user"),
+      email: String(nextUser.email || ""),
     };
     window.localStorage.setItem(KEYS.ACTIVE_USER, JSON.stringify(user));
     return user;
   }
 
+  function clearActiveUser() {
+    window.localStorage.removeItem(KEYS.ACTIVE_USER);
+  }
+
   function userKey(baseKey) {
-    return baseKey + "_" + getActiveUser().id;
+    const user = getActiveUser();
+    return baseKey + "_" + (user ? user.id : "signed-out");
   }
 
   function loadTasks() {
@@ -81,6 +62,7 @@ const Storage = (function () {
 
   function saveTasks(tasks) {
     const user = getActiveUser();
+    if (!user) return;
     window.localStorage.setItem(userKey(KEYS.TASKS), JSON.stringify(tasks));
     if (!window.navigator.onLine) {
       return;
@@ -93,6 +75,10 @@ const Storage = (function () {
   }
 
   async function loadTasksFromFirebase() {
+    const user = getActiveUser();
+    if (!user) {
+      return null;
+    }
     if (!window.navigator.onLine) {
       return null;
     }
@@ -101,7 +87,7 @@ const Storage = (function () {
     }
 
     try {
-      const tasks = await window.FirebaseServices.loadTasks(getActiveUser().id);
+      const tasks = await window.FirebaseServices.loadTasks(user.id);
       if (Array.isArray(tasks)) {
         window.localStorage.setItem(userKey(KEYS.TASKS), JSON.stringify(tasks));
         return tasks;
@@ -137,6 +123,7 @@ const Storage = (function () {
   return {
     getActiveUser,
     setActiveUser,
+    clearActiveUser,
     loadTasks,
     loadTasksFromFirebase,
     saveTasks,

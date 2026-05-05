@@ -25,15 +25,24 @@
           <button class="nav-date-btn" data-shift="1">&#9654;</button>
         </div>
         <div class="navbar__user">
-          <span class="navbar__user-label">User</span>
+          <span class="navbar__user-label" id="auth-status">Signed out</span>
           <input
-            type="text"
-            id="active-user-name"
+            type="email"
+            id="auth-email"
             class="navbar__user-input"
-            maxlength="40"
-            autocomplete="name"
+            placeholder="email"
+            autocomplete="email"
           />
-          <button type="button" id="switch-user" class="nav-tab">Switch</button>
+          <input
+            type="password"
+            id="auth-password"
+            class="navbar__user-input"
+            placeholder="password"
+            autocomplete="current-password"
+          />
+          <button type="button" id="auth-login" class="nav-tab">Login</button>
+          <button type="button" id="auth-register" class="nav-tab">Register</button>
+          <button type="button" id="auth-logout" class="nav-tab" hidden>Logout</button>
         </div>
         <nav class="navbar__right">
           <button class="nav-tab nav-tab--active" data-view="define-task">

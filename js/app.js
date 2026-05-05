@@ -81,33 +81,107 @@ const App = (function () {
     });
   }
 
-  function initUserControls() {
-    activeUser = Storage.getActiveUser();
-    const userInput = document.getElementById("active-user-name");
-    const switchBtn = document.getElementById("switch-user");
-    if (!userInput || !switchBtn) return;
+  function setTaskControlsEnabled(isEnabled) {
+    const form = document.getElementById("task-form");
+    if (!form) return;
+    Array.from(form.elements).forEach((control) => {
+      control.disabled = !isEnabled;
+    });
+  }
 
-    userInput.value = activeUser.name;
+  function updateAuthUi(user) {
+    const statusEl = document.getElementById("auth-status");
+    const emailInput = document.getElementById("auth-email");
+    const passwordInput = document.getElementById("auth-password");
+    const loginBtn = document.getElementById("auth-login");
+    const registerBtn = document.getElementById("auth-register");
+    const logoutBtn = document.getElementById("auth-logout");
 
-    function switchUser() {
-      const nextName = userInput.value.trim();
-      if (!nextName) {
-        window.alert("User name is required.");
-        userInput.value = activeUser.name;
+    if (statusEl) {
+      statusEl.textContent = user ? user.email || user.name : "Signed out";
+    }
+    if (emailInput) emailInput.hidden = Boolean(user);
+    if (passwordInput) {
+      passwordInput.hidden = Boolean(user);
+      if (user) passwordInput.value = "";
+    }
+    if (loginBtn) loginBtn.hidden = Boolean(user);
+    if (registerBtn) registerBtn.hidden = Boolean(user);
+    if (logoutBtn) logoutBtn.hidden = !user;
+    setTaskControlsEnabled(Boolean(user));
+  }
+
+  function initAuthControls() {
+    const emailInput = document.getElementById("auth-email");
+    const passwordInput = document.getElementById("auth-password");
+    const loginBtn = document.getElementById("auth-login");
+    const registerBtn = document.getElementById("auth-register");
+    const logoutBtn = document.getElementById("auth-logout");
+
+    async function runAuthAction(action) {
+      if (!window.FirebaseServices) {
+        window.alert("Firebase is still loading. Please try again.");
         return;
       }
-      const nextUser = Storage.setActiveUser(nextName);
-      if (activeUser && nextUser.id === activeUser.id) return;
-      activeUser = nextUser;
-      refreshTasksFromStorage();
-      showToast("Switched to " + activeUser.name);
+
+      try {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        if (!email || !password) {
+          window.alert("Email and password are required.");
+          return;
+        }
+        if (action === "register") {
+          await window.FirebaseServices.register(email, password);
+          showToast("Account created");
+        } else {
+          await window.FirebaseServices.signIn(email, password);
+          showToast("Signed in");
+        }
+      } catch (error) {
+        window.alert(error && error.message ? error.message : "Authentication failed.");
+      }
     }
 
-    switchBtn.addEventListener("click", switchUser);
-    userInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        switchUser();
+    if (loginBtn) {
+      loginBtn.addEventListener("click", () => runAuthAction("login"));
+    }
+    if (registerBtn) {
+      registerBtn.addEventListener("click", () => runAuthAction("register"));
+    }
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        if (window.FirebaseServices) {
+          await window.FirebaseServices.signOut();
+        }
+      });
+    }
+    [emailInput, passwordInput].forEach((input) => {
+      if (!input) return;
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          runAuthAction("login");
+        }
+      });
+    });
+
+    if (!window.FirebaseServices || !window.FirebaseServices.onAuthChange) {
+      updateAuthUi(null);
+      showToast("Firebase auth is not ready");
+      return;
+    }
+
+    window.FirebaseServices.onAuthChange((user) => {
+      activeUser = user ? Storage.setActiveUser(user) : null;
+      if (!user) {
+        Storage.clearActiveUser();
+        tasks = [];
+        updateAuthUi(null);
+        renderAll();
+        return;
       }
+      updateAuthUi(activeUser);
+      refreshTasksFromStorage();
     });
   }
 
@@ -411,6 +485,10 @@ const App = (function () {
 
     form.addEventListener("submit", (e) => {
       e.preventDefault();
+      if (!activeUser) {
+        window.alert("Please login before adding tasks.");
+        return;
+      }
 
       const title = titleInput.value.trim();
       const category = categoryInput.value;
@@ -449,6 +527,8 @@ const App = (function () {
         date: currentDateISO,
         state: "pending",
         locked: false,
+        createdBy: activeUser.email || activeUser.name,
+        createdById: activeUser.id,
       };
 
       tasks.push(task);
@@ -817,8 +897,6 @@ const App = (function () {
   }
 
   function init() {
-    initUserControls();
-    tasks = Storage.loadTasks();
     initDateControls();
     initTabs();
     initAnalyticsControls();
@@ -826,13 +904,8 @@ const App = (function () {
     handleFormSubmit();
     ChartsModule.initCharts();
     ChartsModule.initYearlyCharts();
+    initAuthControls();
     renderAll();
-    Storage.loadTasksFromFirebase().then((firebaseTasks) => {
-      if (Array.isArray(firebaseTasks)) {
-        tasks = firebaseTasks;
-        renderAll();
-      }
-    });
     startMissWatcher();
   }
 
